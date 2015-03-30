@@ -11,6 +11,7 @@
 static NSString* const kCLClippingToolRatios = @"ratios";
 static NSString* const kCLClippingToolSwapButtonHidden = @"swapButtonHidden";
 static NSString* const kCLClippingToolRotateIconName = @"rotateIconAssetsName";
+static NSString* const kCLClippingToolGridHidden = @"gridHidden";
 
 static NSString* const kCLClippingToolRatioValue1 = @"value1";
 static NSString* const kCLClippingToolRatioValue2 = @"value2";
@@ -39,6 +40,7 @@ static NSString* const kCLClippingToolRatioTitleFormat = @"titleFormat";
 - (id)initWithSuperview:(UIView*)superview frame:(CGRect)frame;
 - (void)setBgColor:(UIColor*)bgColor;
 - (void)setGridColor:(UIColor*)gridColor;
+- (void)setGridHidden:(BOOL)gridHidden;
 - (void)clippingRatioDidChange;
 @end
 
@@ -90,7 +92,8 @@ static NSString* const kCLClippingToolRatioTitleFormat = @"titleFormat";
     return @{
              kCLClippingToolRatios:[self defaultPresetRatios],
              kCLClippingToolSwapButtonHidden:[self defaultSwapButtonHidden],
-             kCLClippingToolRotateIconName:@""
+             kCLClippingToolRotateIconName:@"",
+             kCLClippingToolGridHidden:@(NO)
              };
 }
 
@@ -136,6 +139,7 @@ static NSString* const kCLClippingToolRatioTitleFormat = @"titleFormat";
     _gridView.bgColor = [self.editor.view.backgroundColor colorWithAlphaComponent:0.8];
     _gridView.gridColor = [[UIColor darkGrayColor] colorWithAlphaComponent:0.8];
     _gridView.clipsToBounds = NO;
+    [_gridView setGridHidden:[self.toolInfo.optionalInfo[kCLClippingToolGridHidden] boolValue]];
     
     [self setCropMenu];
     
@@ -293,6 +297,7 @@ static NSString* const kCLClippingToolRatioTitleFormat = @"titleFormat";
 @property (nonatomic, assign) CGRect clippingRect;
 @property (nonatomic, strong) UIColor *bgColor;
 @property (nonatomic, strong) UIColor *gridColor;
+@property (nonatomic) BOOL gridHidden;
 @end
 
 @implementation CLGridLayar
@@ -324,6 +329,8 @@ static NSString* const kCLClippingToolRatioTitleFormat = @"titleFormat";
     
     CGContextClearRect(context, _clippingRect);
     
+    int numOfGridLines = (self.gridHidden) ? 2 : 4;
+    
     CGContextSetStrokeColorWithColor(context, self.gridColor.CGColor);
     CGContextSetLineWidth(context, 1);
     
@@ -331,17 +338,17 @@ static NSString* const kCLClippingToolRatioTitleFormat = @"titleFormat";
     
     CGContextBeginPath(context);
     CGFloat dW = 0;
-    for(int i=0;i<4;++i){
+    for(int i=0;i<numOfGridLines;++i){
         CGContextMoveToPoint(context, rct.origin.x+dW, rct.origin.y);
         CGContextAddLineToPoint(context, rct.origin.x+dW, rct.origin.y+rct.size.height);
-        dW += _clippingRect.size.width/3;
+        dW += _clippingRect.size.width/(numOfGridLines - 1);
     }
     
     dW = 0;
-    for(int i=0;i<4;++i){
+    for(int i=0;i<numOfGridLines;++i){
         CGContextMoveToPoint(context, rct.origin.x, rct.origin.y+dW);
         CGContextAddLineToPoint(context, rct.origin.x+rct.size.width, rct.origin.y+dW);
-        dW += rct.size.height/3;
+        dW += rct.size.height/(numOfGridLines - 1);
     }
     CGContextStrokePath(context);
 }
@@ -416,6 +423,11 @@ static NSString* const kCLClippingToolRatioTitleFormat = @"titleFormat";
 {
     _gridLayer.gridColor = gridColor;
     _ltView.bgColor = _lbView.bgColor = _rtView.bgColor = _rbView.bgColor = [gridColor colorWithAlphaComponent:1];
+}
+
+- (void)setGridHidden:(BOOL)gridHidden
+{
+    _gridLayer.gridHidden = gridHidden;
 }
 
 - (void)setClippingRect:(CGRect)clippingRect
