@@ -229,6 +229,7 @@
     else{
         [self refreshImageView];
     }
+    [self setupToolWithToolInfo:[self.toolInfo subToolInfoWithToolName:@"CLClippingTool" recursive:NO]];
 }
 
 #pragma mark- View transition
@@ -548,19 +549,24 @@
 
 - (void)swapToolBarWithEditting:(BOOL)editting
 {
-    [self swapMenuViewWithEditting:editting];
-    [self swapNavigationBarWithEditting:editting];
+    _menuView.hidden = YES;
+    self.navigationItem.title = self.currentTool.toolInfo.title;
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(pushedDoneBtn:)];
+    self.navigationItem.leftBarButtonItem  = [[UIBarButtonItem alloc] initWithTitle:@"<" style:UIBarButtonItemStylePlain target:self action:@selector(pushedCancelBtn:)];
     
-    if(self.currentTool){
-        UINavigationItem *item  = [[UINavigationItem alloc] initWithTitle:self.currentTool.toolInfo.title];
-        item.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:[CLImageEditorTheme localizedString:@"CLImageEditor_OKBtnTitle" withDefault:@"OK"] style:UIBarButtonItemStyleDone target:self action:@selector(pushedDoneBtn:)];
-        item.leftBarButtonItem  = [[UIBarButtonItem alloc] initWithTitle:[CLImageEditorTheme localizedString:@"CLImageEditor_BackBtnTitle" withDefault:@"Back"] style:UIBarButtonItemStylePlain target:self action:@selector(pushedCancelBtn:)];
-        
-        [_navigationBar pushNavigationItem:item animated:(self.navigationController==nil)];
-    }
-    else{
-        [_navigationBar popNavigationItemAnimated:(self.navigationController==nil)];
-    }
+//    [self swapMenuViewWithEditting:editting];
+//    [self swapNavigationBarWithEditting:editting];
+//    
+//    if(self.currentTool){
+//        UINavigationItem *item  = [[UINavigationItem alloc] initWithTitle:self.currentTool.toolInfo.title];
+//        item.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:[CLImageEditorTheme localizedString:@"CLImageEditor_OKBtnTitle" withDefault:@"OK"] style:UIBarButtonItemStyleDone target:self action:@selector(pushedDoneBtn:)];
+//        item.leftBarButtonItem  = [[UIBarButtonItem alloc] initWithTitle:[CLImageEditorTheme localizedString:@"CLImageEditor_BackBtnTitle" withDefault:@"Back"] style:UIBarButtonItemStylePlain target:self action:@selector(pushedCancelBtn:)];
+//        
+//        [_navigationBar pushNavigationItem:item animated:(self.navigationController==nil)];
+//    }
+//    else{
+//        [_navigationBar popNavigationItemAnimated:(self.navigationController==nil)];
+//    }
 }
 
 - (void)setupToolWithToolInfo:(CLImageToolInfo*)info
@@ -598,6 +604,7 @@
     [self resetImageViewFrame];
     
     self.currentTool = nil;
+    [self pushedCloseBtn:nil];
 }
 
 - (IBAction)pushedDoneBtn:(id)sender
@@ -610,11 +617,12 @@
             [alert show];
         }
         else if(image){
-            _originalImage = image;
+//            _originalImage = image;
             _imageView.image = image;
             
             [self resetImageViewFrame];
             self.currentTool = nil;
+            [self pushedFinishBtn:nil];
         }
         self.view.userInteractionEnabled = YES;
     }];
@@ -640,7 +648,7 @@
 {
     if(self.targetImageView==nil){
         if([self.delegate respondsToSelector:@selector(imageEditor:didFinishEdittingWithImage:)]){
-            [self.delegate imageEditor:self didFinishEdittingWithImage:_originalImage];
+            [self.delegate imageEditor:self didFinishEdittingWithImage:_imageView.image];
         }
         else{
             [self dismissViewControllerAnimated:YES completion:nil];
